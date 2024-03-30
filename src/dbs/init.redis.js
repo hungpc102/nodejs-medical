@@ -1,23 +1,17 @@
+'use strict'
+
 const redis = require('redis');
+
 const client = redis.createClient({
-    port: 6379,
-    host: '127.0.0.1'
+    url: 'redis://127.0.0.1:6379'
 });
 
-client.ping((err, pong) => {
-    console.log(pong)
-})
+client.on('error', (err) => console.error('Redis Client Error', err));
+client.on('connect', () => console.log('Client connected to redis...'));
+client.on('ready', () => console.log('Client connected to redis and ready to use...'));
 
-client.on('error', function(error){
-    console.error(error)
-})
+( async () => {
+    await client.connect();
+})();
 
-client.on('connect', function(error){
-    console.log('connected to redis')
-})
-
-client.on('ready', function(error){
-    console.log('Redis to ready')
-})
-
-module.exports = client;
+module.exports =  client

@@ -29,21 +29,9 @@ UserModel.init({
     type: DataTypes.STRING,
     allowNull: false
   },
-  phone:{
-    type: DataTypes.STRING,
-    allowNull: false
-  },
   roles: {
     type: DataTypes.ENUM('admin', 'staff', 'patient', 'doctor'),
     allowNull: false
-  },
-  sex:{
-    type: DataTypes.STRING,
-    defaultValue: ''
-  },
-  date_of_birth:{
-    type: DataTypes.DATE,
-    defaultValue:null
   },
   status: {
     type: DataTypes.ENUM('active', 'block'),

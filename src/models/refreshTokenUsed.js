@@ -9,8 +9,7 @@ class RefreshTokenUsedModel extends Model {}
 RefreshTokenUsedModel.init({
   refreshTokenUsed: {
     type: DataTypes.STRING,
-    allowNull: false,
-    unique: true
+    allowNull: false
   },
   user_id: {
     type: DataTypes.INTEGER.UNSIGNED,
@@ -29,7 +28,7 @@ RefreshTokenUsedModel.init({
 
 RefreshTokenUsedModel.belongsTo(UserModel, {
     foreignKey: 'user_id', 
-    as: 'user', 
+    as: 'User', 
   });
 
 module.exports = RefreshTokenUsedModel

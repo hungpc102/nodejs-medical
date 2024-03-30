@@ -1,12 +1,18 @@
 // 'use strict'
 
 const UserModel = require("../models/user.model")
+const RefreshTokensUsedModel = require('../models/refreshTokenUsed')
 const bcrypt = require('bcrypt')
 const crypto = require('node:crypto')
 const KeyTokenService = require("./keytoken_redis")
+const RefreshTokenUsed = require('./refreshTokenUssed.service')
 const { createTokenPair, verifyJWT } = require("../auth/authUtils")
 const { getInfoData } = require("../utils")
 const { BadRequestError, ForbiddenError, AuthFailureError } = require("../core/error.response")
+const Doctor = require('../models/doctor.model')
+const MedicalPackage = require('../models/medicalPackage.model')
+const MedicalRecord = require('../models/medicalRecord.model')
+const ClinicMedicalPackage = require('../models/clinicMedicalPackge.model')
 
 // service
 const {findByEmail} = require('./user.service')
@@ -24,29 +30,35 @@ class AccessService {
     static handlerRefreshTokenV2 = async({keyStore, user, refreshToken}) => {
         const {userId, email} = user;
 
-        if(keyStore.refreshTokensUsed.includes(refreshToken)) {
-            await KeyTokenService.deleteKeyById(userId)
+        // if(keyStore.refreshTokensUsed.includes(refreshToken)) {
+        //     await KeyTokenService.deleteKeyById(userId)
+        //     throw new ForbiddenError('Something wrong happend !! Pls relogin')
+        // }
+        const refreshTokenUsed = await RefreshTokenUsed.findDuplicatesRefreshToken(userId, refreshToken)
+        if(refreshTokenUsed){
+            console.log('joijiji')
+            await KeyTokenService.removeKeyById(userId.toString())
             throw new ForbiddenError('Something wrong happend !! Pls relogin')
         }
+        
 
-        if(keyStore.refreshToken !== refreshToken) throw new AuthFailureError('Shop not registeted')
+        if(keyStore.refreshToken !== refreshToken) throw new AuthFailureError('User not registeted')
 
-        const foundShop = await findByEmail({email})
+        const foundUser = await findByEmail({email})
 
-        if(!foundShop) throw new AuthFailureError('Shop not registeted')
+        if(!foundUser) throw new AuthFailureError('Shop not registeted')
 
         // create 1 cap moi
         const tokens = await createTokenPair({userId, email}, keyStore.publicKey, keyStore.privateKey)
 
-        // update token
-        await keyStore.updateOne({
-            $set:{
-                refreshToken: tokens.refreshToken
-            },
-            $addToSet:{
-                refreshTokensUsed: refreshToken // da duoc su dung de lay token moi roi
-            }
+        await RefreshTokensUsedModel.create({user_id:userId, refreshTokenUsed: refreshToken})
+        await KeyTokenService.createKeyToken({  
+            userId,
+            privateKey:keyStore.privateKey, publicKey:keyStore.publicKey, 
+            refreshToken: tokens.refreshToken
         })
+
+
 
         return {
             user,
@@ -100,8 +112,11 @@ class AccessService {
         }
     }
 
-    static logout = async(keyStore) => {
-        const delKey = await KeyTokenService.removeKeyById(keyStore.user_id)
+    static logout = async(user) => {
+        console.log('user')
+
+        console.log(user)
+        const delKey = await KeyTokenService.removeKeyById(user.userId.toString())
         console.log(delKey)
         return delKey
     }
@@ -146,8 +161,12 @@ class AccessService {
         }
     }
     
-    static signUp = async ({name, email, password, phone}) => {
-        
+    static signUp = async ({name, email, password, role ,referralCode}) => {
+            if(role !== 'patient'){
+                if(referralCode !== process.env.REFERRAL_CODE){
+                    throw new AuthFailureError('Authentication error')
+                }
+            }
             const holderUser = await UserModel.findOne({where:{email}})
             if(holderUser){
                 throw new  BadRequestError('Error: Shop already registered!')
@@ -157,7 +176,7 @@ class AccessService {
 
 
             const newUser = await UserModel.create({
-                name, email, password: passwordHash, roles: RoleUser.PATIENT , phone
+                name, email, password: passwordHash, roles: role
             })
 
             if (newUser){

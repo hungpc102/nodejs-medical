@@ -4,6 +4,11 @@ const express = require('express')
 const { default: helmet } = require('helmet')
 const morgan = require('morgan')
 const app = express()
+const cors = require('cors');
+
+app.use(cors({
+    origin: 'http://localhost:3000' // chỉ cụ thể cho origin nào được phép
+  }));
 
 // init middlewares
 app.use(morgan("dev"))

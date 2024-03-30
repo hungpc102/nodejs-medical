@@ -95,7 +95,7 @@ const authenticationV2 = asyncHandler(async (req, res, next) => {
             try {
                 const refreshToken = req.headers[HEADER.REFRESHTOKEN]
                 const decodeUser = JWT.verify(refreshToken, keyStore.privateKey)
-                if(userId !== decodeUser.userId) throw new AuthFailureError('Invalid Userid')
+                if(userId !== decodeUser.userId.toString()) throw new AuthFailureError('Invalid Userid')
                 req.keyStore = keyStore
                 req.user = decodeUser
                 req.refreshToken = refreshToken
@@ -110,7 +110,9 @@ const authenticationV2 = asyncHandler(async (req, res, next) => {
 
         try {
             const decodeUser = JWT.verify(accessToken, keyStore.publicKey)
-            if(userId !== decodeUser.userId) throw new AuthFailureError('Invalid Userid')
+            const user_id = decodeUser.userId.toString()
+
+            if(userId !== user_id) throw new AuthFailureError('Invalid Userid')
             req.keyStore = keyStore
             req.user = decodeUser // {userId, email}
             return next()

@@ -7,21 +7,21 @@ class ClinicMedicalPackage extends Model {}
 
 ClinicMedicalPackage.init({
   
-    clind_id: {
+    clinic_id: {
         type: DataTypes.INTEGER.UNSIGNED,
         allowNull: false,
         references: {
-            model: 'Users', 
-            key: 'user_id', 
+            model: 'Clinics', 
+            key: 'clinic_id', 
           }
     },
     package_id: {
-    type: DataTypes.INTEGER.UNSIGNED,
-    allowNull: false,
-    references: {
-        model: 'Users', 
-        key: 'user_id', 
-        }
+        type: DataTypes.INTEGER.UNSIGNED,
+        allowNull: false,
+        references: {
+            model: 'MedicalPackages', 
+            key: 'package_id', 
+            }
     }
 }, {
   sequelize,

@@ -18,12 +18,12 @@ sequelize.authenticate()
   });
 
 
-sequelize.sync({ alter: true  }).then(() => {
-  console.log("Tables have been successfully created");
-}).catch(error => {
-  console.error("Unable to create tables, shutting down...", error);
-  process.exit(1);
-});
+// sequelize.sync({ alter: true  }).then(() => {
+//   console.log("Tables have been successfully created");
+// }).catch(error => {
+//   console.error("Unable to create tables, shutting down...", error);
+//   process.exit(1);
+// });
 
 
 process.on('SIGINT', async () => {

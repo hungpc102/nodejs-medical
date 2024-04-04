@@ -13,6 +13,7 @@ const Doctor = require('../models/doctor.model')
 const MedicalPackage = require('../models/medicalPackage.model')
 const MedicalRecord = require('../models/medicalRecord.model')
 const ClinicMedicalPackage = require('../models/clinicMedicalPackge.model')
+const Staff = require('../models/staff.model')
 
 // service
 const {findByEmail} = require('./user.service')
@@ -145,8 +146,12 @@ class AccessService {
 
         // 4 - generate tokens
         const userId = foundUser.user_id
+        const role =  foundUser.roles
+        console.log(":::::::role[[[[[[")
 
-        const tokens = await createTokenPair({userId, email}, publicKey, privateKey)
+        console.log(role)
+
+        const tokens = await createTokenPair({userId, email, role}, publicKey, privateKey)
         console.log('Created Token Success::', tokens)
 
         await KeyTokenService.createKeyToken({  

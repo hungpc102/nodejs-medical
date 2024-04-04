@@ -18,8 +18,8 @@ Clinic.init({
     allowNull: false
   },
   clinic_status:{
-    type: DataTypes.ENUM('pending', 'examining', 'finish'),
-    defaultValue: 'pending'
+    type: DataTypes.ENUM('waiting', 'active', 'closing'),
+    defaultValue: 'waiting'
   },
   user_id:{
     type: DataTypes.INTEGER.UNSIGNED,

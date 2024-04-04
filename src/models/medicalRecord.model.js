@@ -64,7 +64,7 @@ MedicalRecord.init({
     defaultValue: 'pending'
   },
   exam_results:{
-    type: DataTypes.STRING, 
+    type: DataTypes.TEXT, 
     allowNull: true
   }
 }, {
@@ -80,7 +80,7 @@ MedicalRecord.belongsTo(UserModel, {
 });
 
 MedicalRecord.belongsTo(MedicalPackage, {
-    foreignKey: 'packege_id', 
+    foreignKey: 'package_id', 
     as: 'MedicalPackage', 
 });
 

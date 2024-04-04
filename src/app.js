@@ -5,6 +5,7 @@ const { default: helmet } = require('helmet')
 const morgan = require('morgan')
 const app = express()
 const cors = require('cors');
+const WaitingRoom = require('./services/waitingRoom.service')
 
 app.use(cors({
     origin: 'http://localhost:3000' // chỉ cụ thể cho origin nào được phép
@@ -23,8 +24,12 @@ app.use(express.urlencoded({
 // require('./dbs/init.mongodb')
 require('./dbs/init.redis')
 require('./dbs/init.mysql')
+require('./dbs/init.firebase')
+require('./services/coordinator.service')
 // const {checkOverload} = require('./helpers/check.connect')
 // checkOverload()
+
+//  WaitingRoom.createWaitingRooms();
 
 // init routes
 app.use('/', require('./routes'))
@@ -46,7 +51,6 @@ app.use((error, req, res, next) => {
         message: error.message || 'Internal Server Error'
     })
 })
-
 
 
 module.exports = app

@@ -2,9 +2,9 @@ const { DataTypes, Model } = require('sequelize');
 const sequelize = require('../dbs/init.mysql');
 const UserModel = require('./user.model')
 
-class Doctor extends Model {}
+class Staff extends Model {}
 
-Doctor.init({
+Staff.init({
   user_id:{
     type: DataTypes.INTEGER.UNSIGNED,
     allowNull: true,
@@ -13,38 +13,38 @@ Doctor.init({
         key: 'user_id', 
       }
   },
-  doctor_id:{
+  staff_id:{
     type: DataTypes.INTEGER.UNSIGNED,
     autoIncrement: true,
     primaryKey: true
   },
-  doctor_name:{
+  staff_name:{
     type: DataTypes.STRING(150),
     allowNull:true
   },
-  doctor_age:{
+  staff_age:{
     type: DataTypes.INTEGER.UNSIGNED,
     allowNull: true
   },
-  doctor_department:{
+  staff_department:{
     type: DataTypes.STRING(150),
     allowNull:true
   },
-  doctor_describe:{
+  staff_describe:{
     type: DataTypes.TEXT, 
     allowNull: true
   }
 }, {
   sequelize,
-  modelName: 'Doctor',
-  tableName: 'Doctors',
+  modelName: 'Staff',
+  tableName: 'Staffs',
   timestamps: true
 });
 
-Doctor.belongsTo(UserModel, {
+Staff.belongsTo(UserModel, {
     foreignKey: 'user_id', 
     as: 'User', 
   });
 
 
-module.exports = Doctor;
+module.exports = Staff;

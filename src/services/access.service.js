@@ -14,6 +14,7 @@ const MedicalPackage = require('../models/medicalPackage.model')
 const MedicalRecord = require('../models/medicalRecord.model')
 const ClinicMedicalPackage = require('../models/clinicMedicalPackge.model')
 const Staff = require('../models/staff.model')
+const ExaminationResult = require('../models/examinationResult.model')
 
 // service
 const {findByEmail} = require('./user.service')
@@ -136,7 +137,7 @@ class AccessService {
         if (!foundUser) throw new BadRequestError('Shop not registered')
 
         // 2.
-        const match = bcrypt.compare(password, foundUser.password)
+        const match = await bcrypt.compare(password, foundUser.password)
         if(!match) throw new AuthFailureError('Authentication error')
 
         // 3.

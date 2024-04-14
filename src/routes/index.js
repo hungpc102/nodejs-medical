@@ -16,6 +16,10 @@ router.use('/v1/api/doctor', require('./doctor'))
 router.use('/v1/api/medicalRecord', require('./medicalRecord'))
 router.use('/v1/api/clinic', require('./clinic'))
 router.use('/v1/api/waitingRoom', require('./waitingRoom'))
+router.use('/v1/api/coordinator', require('./coordinator'))
+router.use('/v1/api/examinationResult', require('./examinationResult'))
+
+
 
 
 

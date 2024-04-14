@@ -63,6 +63,10 @@ MedicalRecord.init({
     type: DataTypes.ENUM('pending', 'examining', 'finish'),
     defaultValue: 'pending'
   },
+  score:{
+    type: DataTypes.INTEGER.UNSIGNED,
+    allowNull: false,
+  },
   exam_results:{
     type: DataTypes.TEXT, 
     allowNull: true

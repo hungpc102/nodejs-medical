@@ -1,55 +1,120 @@
+const { update } = require("lodash");
+const { BadRequestError} = require("../core/error.response")
 const db = require('../dbs/init.firebase');
-const ClinicRoom = require('./clinic.service')
+const ClinicService = require('./clinic.service')
 const WaitingRoomService = require('./waitingRoom.service')
+const ExaminationResultService = require('./examinationResult.service')
+const MedicalRecordService = require('./medicalRecord.service')
 
 const clinicRoomsRef = db.ref('clinicRooms');
 
 // Lắng nghe sự kiện 'child_changed' trên ref này để phát hiện thay đổi trạng thái
-clinicRoomsRef.on('child_changed', (snapshot) => {
-  // In ra thông tin trạng thái mới của phòng khám bị thay đổi
-  console.log(`Phòng khám được cập nhật (${snapshot.key}):` , snapshot.val());
-  
-  // Thực hiện xử lý khi một phòng khám thay đổi trạng thái
-  // ...
+clinicRoomsRef.on('child_changed', async (snapshot) => {
+  const roomStatus = snapshot.val();
+  const roomName = snapshot.key;
+
+  // Log ra để debug
+  console.log(`Phòng khám được cập nhật (${roomName}):`, roomStatus);
+
+  // Kiểm tra nếu trạng thái phòng khám là 'ready'
+  if (roomStatus.clinic_status === 'ready') {
+    console.log(`Phòng khám ${roomName} sẵn sàng cho bệnh nhân.`);
+    patientToClinic(roomName)
+  }
 });
 
 
-// async function createClinicRooms() {
-//     // Tạo danh sách các phòng khám
-//     let clinicRooms = [
-//       new ClinicRoom('1', 'empty', 'Phòng cân đo', '', '', ''),
-//       new ClinicRoom('2', 'empty', 'Phòng xét nghiệm', '', '', ''),
-//       new ClinicRoom('3', 'empty', 'Phòng tai mũi họng', '', '', ''),
-//       new ClinicRoom('4', 'empty', 'Phòng siêu âm', '', '', ''),
-//       new ClinicRoom('5', 'empty', 'Phòng khám mắt', '', '', ''),
-//       new ClinicRoom('6', 'empty', 'Phòng khám nội - da liễu', '', '', ''),
-//       new ClinicRoom('7', 'empty', 'Phòng Khám ngoại', '', ''),
-//       new ClinicRoom('8', 'empty', 'Phòng Khám răng hàm mặt', '', '', ''),
-//     ];
-  
-//     // Dùng vòng lặp qua danh sách và lưu mỗi phòng vào database
-//     for (let clinicRoom of clinicRooms) {
-//       try {
-//         await clinicRoom.save();
-//         console.log(`Phòng ${clinicRoom.name} đã được tạo thành công!`);
-//       } catch (error) {
-//         console.error(`Không thể tạo phòng ${clinicRoom.name}: ${error}`);
-//       }
-//     }
-// }
 
-// createClinicRooms().then(() => {
+
+// ClinicService.createClinicRooms().then(() => {
 //   console.log('Tất cả phòng khám đã được tạo.');
 // });
 
-   async function createClinicRooms(roomName) {
-    const patient = WaitingRoomService.getHighestScorePatient(roomName)
-    if(patient){
-      
+async function patientToClinic(clinicId) {
+  const patient = await WaitingRoomService.getHighestScorePatient(clinicId); // Sử dụng await
+  if (patient) {
+    // const clinicId = roomName.replace("waitingRoom", ""); // Xóa "waitingRoom" khỏi tên để lấy clinicId
+    try {
+      await ClinicService.update({ // Đảm bảo ClinicService.update là hàm async hoặc trả về Promise
+        clinic_id: clinicId,
+        patient_id: patient.patientId,
+        score: patient.patientScore,
+        clinic_status: 'examining'
+      });
+      console.log('Clinic room updated with patient data.');
+      const roomName = `waitingRoom${clinicId}`
+      await WaitingRoomService.removePatientFromWaitingRoom({ roomName:roomName, patientId: patient.patientId }); // Sử dụng await
+    } catch (err) {
+      console.error('Failed to update clinic room:', err);
+    }
+  } else {
+    console.log('No highest score patient found for updating clinic room.');
+  }
+}
+
+   async function HandleAddPatientToWaitingRoom({patientId, score}) {
+    const roomExamined = await findRoomExamined({patient_id: patientId})
+    
+    const roomName = await WaitingRoomService.findQuietestRoom(roomExamined)
+    if(roomName){
+      return WaitingRoomService.addPatientToWaitingRoom({roomName, patientId, score})
+    }else{
+      MedicalRecordService.updateMedicalRecord(patientId,{
+        medicalRecord_status: 'end'
+      })
+    }
+   }
+
+   async function updateStatusClinic({ clinicId, status }) {
+    try {
+      await ClinicService.update({ clinic_id: clinicId, clinic_status: status });
+      console.log('Clinic status updated.');
+    } catch (error) {
+      console.error('Error updating clinic status:', error);
+      throw new BadRequestError('Error update status failure');
     }
    }
 
 
+  async function findRoomExamined({patient_id}) {
+    try {
+      const results = await ExaminationResultService.findResult({ patient_id:patient_id });
+      if (results.length > 0) {
+        const roomExamined = results.map(result => result.clinic_id);
+        return roomExamined;
+      } else {
+        console.log('Không có kết quả nào cho bệnh nhân này.');
+        return [];
+      }
+    } catch (error) {
+      console.error('Error finding examined room:', error);
+      throw error;
+    }
+  }
+
+  async function recordAndQueuePatient({user_id, patient_id, clinic_id, result}){
+    const record = await MedicalRecordService.getFilteredMedicalRecords({patient_id:patient_id})
+    const score = record[0].score
+    const resultMedical = await ExaminationResultService.createResult({user_id, result:result, clinic_id:clinic_id, patient_id:patient_id})
+    if(resultMedical){
+      try { 
+        await HandleAddPatientToWaitingRoom({patientId:patient_id, score:score})
+        await ClinicService.update({
+          clinic_id: clinic_id,
+          patient_id:"",
+          score:"",
+          clinic_status: 'empty'
+        });
+        console.log('Clinic room updated with patient data.');
+        
+      } catch (err) {
+        console.error('Failed to update clinic room:', err);
+      }
+    }
+  }
 
 
-module.exports = { clinicRoomsRef };
+
+
+
+module.exports = { patientToClinic, HandleAddPatientToWaitingRoom, updateStatusClinic, recordAndQueuePatient};

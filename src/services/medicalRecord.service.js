@@ -1,6 +1,7 @@
 'use strict';
 
 const MedicalRecord = require('../models/medicalRecord.model');
+const MedicalPackage = require('../models/medicalPackage.model')
 
 class MedicalRecordService {
 
@@ -24,10 +25,19 @@ class MedicalRecordService {
             if (filters.medicalRecord_status) {
                 conditions.medicalRecord_status = filters.medicalRecord_status;
             }
+
+            
     
             const records = await MedicalRecord.findAll({
                 where: conditions,
+                include: [{
+                    model: MedicalPackage,
+                    as: 'MedicalPackage',
+                    attributes: ['package_name'],
+                }]
             });
+            
+          
     
             return records;
         } catch (error) {
@@ -35,6 +45,11 @@ class MedicalRecordService {
             console.error("Lỗi trong getFilteredMedicalRecords:", error);
             throw error;
         }
+    }
+
+    static async getByPatientId(patient_id){
+        const record = await MedicalRecord.findByPk(patient_id)
+        return record
     }
 
     static async createMedicalRecord(data) {

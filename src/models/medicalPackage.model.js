@@ -1,5 +1,6 @@
 const { DataTypes, Model } = require('sequelize');
 const sequelize = require('../dbs/init.mysql');
+const MedicalRecord = require('./medicalRecord.model')
 
 class MedicalPackage extends Model {}
 
@@ -23,6 +24,8 @@ MedicalPackage.init({
   tableName: 'MedicalPackages',
   timestamps: false
 });
+
+
 
 
 module.exports = MedicalPackage;

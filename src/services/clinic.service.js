@@ -36,23 +36,30 @@ class ClinicService {
     const ref = db.ref('clinicRooms');
     let patient;
     try {
+      // Truy vấn lấy snapshot dựa trên userID
       const snapshot = await ref.orderByChild('user_id').equalTo(user.userId).once('value');
-      const rooms = snapshot.val();
-      if (rooms && rooms[1]) {
-        const patient_id = rooms[1].patient_id;
-        if (patient_id) {
-          patient = await MedicalRecordService.getFilteredMedicalRecords({ patient_id });
+      const rooms = snapshot.val(); // rooms có thể là một đối tượng hoặc null
+
+      // Lấy khóa của phòng khám đầu tiên tìm được (nếu có)
+      const roomKey = rooms && Object.keys(rooms)[0];
+
+      // Nếu tìm thấy phòng khám, truy cập đối tượng phòng khám và lấy thông tin bệnh nhân
+      if (roomKey) {
+        const room = rooms[roomKey];
+        if (room.patient_id) {
+          patient = await MedicalRecordService.getFilteredMedicalRecords({ patient_id: room.patient_id });
         }
-  
-        return { clinic: rooms[1], patient };
+        return { clinic: room, patient };
+      } else {
+        // Nếu không tìm thấy phòng khám nào, throw Error
+        throw new Error('No clinic rooms found for the given user ID.');
       }
-      throw new Error('No clinic rooms found for the given user ID.');
-      
     } catch (error) {
       console.error("Error finding room by user_id:", error);
       throw error;
     }
   }
+
   
   // Tải thông tin phòng khám
   static findById(clinic_id) {

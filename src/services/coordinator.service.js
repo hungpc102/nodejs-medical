@@ -5,6 +5,9 @@ const ClinicService = require('./clinic.service')
 const WaitingRoomService = require('./waitingRoom.service')
 const ExaminationResultService = require('./examinationResult.service')
 const MedicalRecordService = require('./medicalRecord.service')
+const ClinicMedicalPackageService = require('./ClinicMedicalPackage.service')
+
+
 
 const clinicRoomsRef = db.ref('clinicRooms');
 
@@ -43,7 +46,10 @@ async function patientToClinic(clinicId) {
       });
       console.log('Clinic room updated with patient data.');
       const roomName = `waitingRoom${clinicId}`
-      await WaitingRoomService.removePatientFromWaitingRoom({ roomName:roomName, patientId: patient.patientId }); // Sử dụng await
+      await WaitingRoomService.removePatientFromWaitingRoom({ roomName:roomName, patientId: patient.patientId }); 
+      await MedicalRecordService.updateMedicalRecord(patient.patientId,{
+        medicalRecord_status: 'examining'
+      })
     } catch (err) {
       console.error('Failed to update clinic room:', err);
     }
@@ -52,15 +58,20 @@ async function patientToClinic(clinicId) {
   }
 }
 
-   async function HandleAddPatientToWaitingRoom({patientId, score}) {
+   async function HandleAddPatientToWaitingRoom({patientId, score, package_id}) {
+    
+    const  clinicsPackage = await ClinicMedicalPackageService.getClinicsPackage(package_id)
     const roomExamined = await findRoomExamined({patient_id: patientId})
     
-    const roomName = await WaitingRoomService.findQuietestRoom(roomExamined)
+    const roomName = await WaitingRoomService.findQuietestRoom(roomExamined, clinicsPackage)
     if(roomName){
+      await MedicalRecordService.updateMedicalRecord(patientId,{
+        medicalRecord_status: 'pending'
+      })
       return WaitingRoomService.addPatientToWaitingRoom({roomName, patientId, score})
     }else{
       MedicalRecordService.updateMedicalRecord(patientId,{
-        medicalRecord_status: 'end'
+        medicalRecord_status: 'finish'
       })
     }
    }
@@ -95,10 +106,11 @@ async function patientToClinic(clinicId) {
   async function recordAndQueuePatient({user_id, patient_id, clinic_id, result}){
     const record = await MedicalRecordService.getFilteredMedicalRecords({patient_id:patient_id})
     const score = record[0].score
+    const package_id = record[0].package_id
     const resultMedical = await ExaminationResultService.createResult({user_id, result:result, clinic_id:clinic_id, patient_id:patient_id})
     if(resultMedical){
       try { 
-        await HandleAddPatientToWaitingRoom({patientId:patient_id, score:score})
+        await HandleAddPatientToWaitingRoom({patientId:patient_id, score:score, package_id:package_id})
         await ClinicService.update({
           clinic_id: clinic_id,
           patient_id:"",

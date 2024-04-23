@@ -3,6 +3,7 @@ const sequelize = require('../dbs/init.mysql');
 
 const MedicalRecord = require('./medicalRecord.model')
 const UserModel = require('./user.model')
+const Clinic = require('./clinic.model')
 
 
 class ExaminationResult extends Model {}
@@ -60,5 +61,10 @@ ExaminationResult.belongsTo(UserModel, {
     foreignKey: 'user_id', 
     as: 'User', 
   });
+
+ExaminationResult.belongsTo(Clinic, {
+  foreignKey: 'clinic_id', 
+  as: 'Clinic', 
+});
 
 module.exports = ExaminationResult;

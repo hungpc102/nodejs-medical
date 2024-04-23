@@ -47,32 +47,39 @@ class WaitingRoomService {
         }
     }
 
-    static async findQuietestRoom(roomExamined) {
-      const numberOfWaitingRooms = 8; 
-      let minCount = Infinity;
-      let leastOccupiedRoom = null;
-      let examinedRoomsCount = 0;
-    
-      for (let i = 1; i <= numberOfWaitingRooms; i++) {
-        const roomKey = `waitingRoom${i}`;
-        // Kiểm tra xem phòng hiện tại có trong roomExamined không
-        if (roomExamined.includes(i)) {
-          examinedRoomsCount++
-          continue; // Nếu có, bỏ qua và tiếp tục vòng lặp
-        }
-        const patientCount = await redisClient.zCard(roomKey);
-        
-        if (patientCount < minCount) {
-          minCount = patientCount;
-          leastOccupiedRoom = roomKey;
-        }
-      }
+    static async findQuietestRoom(roomExamined, clinicsPackage) {
+      console.log(roomExamined)
+      console.log(clinicsPackage)
 
-      if (examinedRoomsCount === numberOfWaitingRooms) {
+       // Kiểm tra xem đã khám qua tất cả các phòng khám chưa
+       if (clinicsPackage.length === roomExamined.length && clinicsPackage.every(item => roomExamined.includes(item))) {
         console.log(`Bệnh nhân đã khám qua tất cả các phòng khám.`);
         return null;
       }
-    
+
+      const waitingRoomsPackage = clinicsPackage.map(clinicId => {
+        return 'waitingRoom' + clinicId;
+      });
+
+      const waitingRoomExamined = roomExamined.map(room => {
+        return 'waitingRoom' + room;
+      });
+  
+      let minCount = Infinity;
+      let leastOccupiedRoom = null;
+  
+      for (const waitingRoom of waitingRoomsPackage) {
+        if (waitingRoomExamined.includes(waitingRoom)) {
+          continue; // Nếu có, bỏ qua và tiếp tục vòng lặp
+        }
+        const patientCount = await redisClient.zCard(waitingRoom);
+  
+        if (patientCount < minCount) {
+          minCount = patientCount;
+          leastOccupiedRoom = waitingRoom;
+        }
+      }
+  
       if (leastOccupiedRoom !== null) {
         console.log(`Phòng chờ có ít bệnh nhân nhất là: ${leastOccupiedRoom} với ${minCount} bệnh nhân.`);
       } else {
@@ -81,6 +88,7 @@ class WaitingRoomService {
       
       return leastOccupiedRoom;
     }
+    
 
     static async removePatientFromWaitingRoom({ roomName, patientId }) {
       try {

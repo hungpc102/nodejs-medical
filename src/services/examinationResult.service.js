@@ -1,6 +1,7 @@
 'use strict'
 
 const ExaminationResult = require('../models/examinationResult.model');
+const clinic = require('../models/clinic.model')
 
 class ExaminationResultService{
 
@@ -17,7 +18,12 @@ class ExaminationResultService{
       static async findResult(data) {
         try {
           const results = await ExaminationResult.findAll({
-            where: data
+            where: data,
+            include: [{
+              model: clinic,
+              as: 'Clinic',
+              attributes: ['clinic_name'],
+            }]
           });
           console.log(`result:#########${results}`)
           return results;

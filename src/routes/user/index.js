@@ -1,17 +1,18 @@
 'use strict'
 
 const express = require('express')
-const examinationResultController = require('../../controllers/examinationResult.Controller')
+const userController = require('../../controllers/user.controller')
 const router = express.Router()
 const asyncHandler = require('../../helpers/asyncHandler')
 const {authenticationV2 } = require('../../auth/authUtils')
 
+
 // authentication //
 router.use(authenticationV2)
 ////////////////////
-router.post('', asyncHandler(examinationResultController.createResult))
-router.post('/detail', asyncHandler(examinationResultController.findResult))
-
+router.post('/getAllUser', asyncHandler(userController.findAllUser))
+router.post('/delete', asyncHandler(userController.deleteUserByID))
+router.post('/updateStatus', asyncHandler(userController.updateUserStatus))
 
 
 module.exports = router

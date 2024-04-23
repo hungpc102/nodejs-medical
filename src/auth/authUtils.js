@@ -113,6 +113,7 @@ const authenticationV2 = asyncHandler(async (req, res, next) => {
             const user_id = decodeUser.userId.toString()
 
             if(userId !== user_id) throw new AuthFailureError('Invalid Userid')
+            if(decodeUser.status === 'block') throw new AuthFailureError('Invalid Userid')
             req.keyStore = keyStore
             req.user = decodeUser // {userId, email}
             return next()

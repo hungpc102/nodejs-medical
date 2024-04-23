@@ -9,12 +9,7 @@ const RefreshTokenUsed = require('./refreshTokenUssed.service')
 const { createTokenPair, verifyJWT } = require("../auth/authUtils")
 const { getInfoData } = require("../utils")
 const { BadRequestError, ForbiddenError, AuthFailureError } = require("../core/error.response")
-const Doctor = require('../models/doctor.model')
-const MedicalPackage = require('../models/medicalPackage.model')
-const MedicalRecord = require('../models/medicalRecord.model')
-const ClinicMedicalPackage = require('../models/clinicMedicalPackge.model')
-const Staff = require('../models/staff.model')
-const ExaminationResult = require('../models/examinationResult.model')
+
 
 // service
 const {findByEmail} = require('./user.service')
@@ -38,7 +33,6 @@ class AccessService {
         // }
         const refreshTokenUsed = await RefreshTokenUsed.findDuplicatesRefreshToken(userId, refreshToken)
         if(refreshTokenUsed){
-            console.log('joijiji')
             await KeyTokenService.removeKeyById(userId.toString())
             throw new ForbiddenError('Something wrong happend !! Pls relogin')
         }
@@ -148,11 +142,12 @@ class AccessService {
         // 4 - generate tokens
         const userId = foundUser.user_id
         const role =  foundUser.roles
+        const status = foundUser.status
         console.log(":::::::role[[[[[[")
 
         console.log(role)
 
-        const tokens = await createTokenPair({userId, email, role}, publicKey, privateKey)
+        const tokens = await createTokenPair({userId, email, role, status}, publicKey, privateKey)
         console.log('Created Token Success::', tokens)
 
         await KeyTokenService.createKeyToken({  

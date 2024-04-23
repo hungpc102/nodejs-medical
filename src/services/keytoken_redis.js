@@ -27,6 +27,7 @@ class KeyTokenService {
             if (data !== null) {
                 
               const parsedData = JSON.parse(data);
+              console.log(parsedData)
               return parsedData; 
                 
             } else {

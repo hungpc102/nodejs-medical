@@ -4,9 +4,13 @@ const RefreshTokenUsedModel = require('../models/refreshTokenUsed');
 
 class RefreshTokenUsed {
     static findDuplicatesRefreshToken= async(userId, refreshToken) => {
-         const tokens = await RefreshTokenUsedModel.findAll({ where: { user_id : userId, refreshTokenUsed:refreshToken } });
-         console.log(typeof tokens)
-         return tokens
+        try {
+            const tokens = await RefreshTokenUsedModel.findOne({ where: { user_id : userId, refreshTokenUsed:refreshToken } });
+            return tokens
+            
+        } catch (error) {
+            console.error('There was an error fetching the tokens:', error);
+        }
     }
 
 

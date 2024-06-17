@@ -5,13 +5,11 @@ const Doctor = require('./doctor.model')
 class Clinic extends Model {}
 
 Clinic.init({
-  // Cấu hình cho khóa chính clinic_id
   clinic_id: {
     type: DataTypes.INTEGER.UNSIGNED,
     autoIncrement: true,
     primaryKey: true
   },
-  // Cấu hình cho cột clinic_name
   clinic_name: {
     type: DataTypes.STRING(250),
     allowNull: false

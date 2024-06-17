@@ -14,13 +14,6 @@ const { BadRequestError, ForbiddenError, AuthFailureError } = require("../core/e
 // service
 const {findByEmail} = require('./user.service')
 
-const RoleUser = {
-    SHOP: 'SHOP',
-    WRITER: 'WRITER',
-    EDITOR:'EDITOR',
-    ADMIN: 'ADMIN',
-    PATIENT: 'patient'
-}
  
 class AccessService {
 
@@ -62,52 +55,7 @@ class AccessService {
         }
     }
 
-    static handlerRefreshToken = async(refreshToken) => {
-
-        // check xem token da duoc su dung hay chua
-        const foundToken = await KeyTokenService.findByRefreshTokenUsed(refreshToken)
-        // neu co           
-        if(foundToken){
-            //decode may là thang nao?
-            const { userId, email} = await verifyJWT(refreshToken, foundToken.privateKey)
-            console.log({userId, email})
-
-            //xoa tat ca token trong keyStore
-            await KeyTokenService.deleteKeyById(userId)
-            throw new ForbiddenError('Something wrong happend !! relogin')
-        }
-
-        // No, qua ngon
-        const holderToken = await KeyTokenService.findByRefreshToken(refreshToken)
-        if(!holderToken) throw new AuthFailureError('Shop not registeted')
-
-        // verifyToken
-        const { userId, email} = await verifyJWT(refreshToken, holderToken.privateKey)
-        console.log('[2]--', { userId, email})
-
-        // check UserId
-        const foundShop = await findByEmail({email})
-        if(!foundShop) throw new AuthFailureError('Shop not registeted')
-
-        // create 1 cap moi
-        const tokens = await createTokenPair({userId, email}, holderToken.publicKey, holderToken.privateKey)
-
-        // update token
-        await holderToken.updateOne({
-            $set:{
-                refreshToken: tokens.refreshToken
-            },
-            $addToSet:{
-                refreshTokensUsed: refreshToken // da duoc su dung de lay token moi roi
-            }
-        })
-
-        return {
-            user: {userId, email},
-            tokens
-        }
-    }
-
+   
     static logout = async(user) => {
         console.log('user')
 
